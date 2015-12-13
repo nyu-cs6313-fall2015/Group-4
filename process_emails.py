@@ -1,6 +1,4 @@
 import email.parser
-# import canonicaljson as json
-# import simplejson as json
 import json
 import os
 
