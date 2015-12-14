@@ -218,6 +218,22 @@
                     var node_elements = svg.selectAll("circle").data(node_list);
                     node_elements.exit().remove();
                     
+                    var min_rad = null;
+                    var max_rad = null;
+                    
+                    for (var i = 0; i < node_list.length; i++) {
+                        var node = node_list[i];
+                        var curr_rad = return_radius(node);
+                        if (min_rad == null) { min_rad = curr_rad; }
+                        if (max_rad == null) { max_rad = curr_rad; }
+                        if (min_rad > curr_rad) { min_rad = curr_rad; }
+                        if (max_rad < curr_rad) { max_rad = curr_rad; }
+                    }
+                    
+                    var area_scale = d3.scale.linear();
+                    area_scale.range([5, 15]);
+                    area_scale.domain([min_rad, max_rad]);
+                    
                     node_elements.enter().append("circle")
                         .on('mouseover', function(d) {
                         Dispatcher.notify('onMouseover', d);
@@ -225,7 +241,7 @@
                         Dispatcher.notify('onMouseout', d);
                     });
                     node_elements.transition().attr({
-                        r: function(d) { return d.nTotal; },
+                        r: function(d) { return area_scale(return_radius(d)); },
                         cx: function(d) { return X_AXIS_OFFSET_X + self.x_scale(d.date) },
                         cy: function(d) { return self.y_scale(d.name) }
                     });
@@ -254,6 +270,14 @@
                         .style("fill", "red");
                     d3.select("#tooltip").style("display", "none");
                 }
+            }
+            
+            function return_radius(d) {
+                if (d.nTotal == 0) { return 0; } 
+                var pi = 3.14;
+                var result = Math.sqrt(d.nTotal/pi);
+                console.log(result);
+                return result;
             }
             
         </script>
