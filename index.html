@@ -147,13 +147,13 @@
             }
             
             var SVG_WIDTH = 1100;
-            var SVG_HEIGHT = 750;
+            var SVG_HEIGHT = 770;
             var Y_AXIS_OFFSET_X = 200;
             var Y_AXIS_OFFSET_Y = 0;
             var X_AXIS_OFFSET_X = Y_AXIS_OFFSET_X - 40;
-            var X_AXIS_OFFSET_Y = SVG_HEIGHT - 20;
+            var X_AXIS_OFFSET_Y = SVG_HEIGHT - 40;
             var Y_AXIS_RANGE_LOW = 10;
-            var Y_AXIS_RANGE_HIGH = SVG_HEIGHT - 20;
+            var Y_AXIS_RANGE_HIGH = SVG_HEIGHT - 40;
             var X_AXIS_RANGE_LOW = 40;
             var X_AXIS_RANGE_HIGH = SVG_WIDTH - Y_AXIS_RANGE_LOW - X_AXIS_OFFSET_X;
             
@@ -211,7 +211,12 @@
                     this.x_scale.domain([adj_startDate, adj_endDate]);
                     this.y_scale.domain(other_users);
                     
-                    this.x_axis_group.transition().call(this.x_axis);
+                    this.x_axis_group.transition().call(this.x_axis)
+                        .selectAll("text")
+                        .style("text-anchor", "end")
+                        .attr("dx", "-.8em")
+                        .attr("dy", ".15em")
+                        .attr("transform", "rotate(-55)");
                     this.y_axis_group.transition().call(this.y_axis);
                     
                     var svg = d3.select("#viz");
@@ -276,7 +281,6 @@
                 if (d.nTotal == 0) { return 0; } 
                 var pi = 3.14;
                 var result = Math.sqrt(d.nTotal/pi);
-                console.log(result);
                 return result;
             }
             
