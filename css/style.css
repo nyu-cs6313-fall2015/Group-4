@@ -9,7 +9,7 @@ html, body, div, h1, h2, h3, span, ul, li{
 div#vizBlock {
     width: 1100px;
     height: 800px;
-    overflow: scroll;
+/*    overflow: scroll;*/
     float: left;
 }
 
