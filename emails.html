@@ -38,24 +38,24 @@
 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
 	<script>
-
-
-
-
-
-        var startDate = "2015-11-26";
-        var endDate = "2015-12-1";
-
-
-
-
-
-
-
-
-
-
-
+        var startDate;
+        var endDate;
+        var data_obj;
+        var user_list;
+        var email_dict;
+        var user_data_dict;
+        var year_month_pairs;
+        
+        d3.json("data.json", function(data) {
+            data_obj = data;
+            user_list = data_obj.user_list;
+            email_dict = data_obj.emails;
+            user_data_dict = data_obj.user_data;
+            startDate = data_obj.start_date;
+            endDate = data_obj.end_date;
+//            console.log(user_data_dict);
+            year_month_pairs = data_obj.year_month_pairs;
+        });
 
 		function prsButton(event, value){
 			if (event.keyCode == 13)
