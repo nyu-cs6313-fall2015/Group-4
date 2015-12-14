@@ -1,0 +1,73 @@
+*{font-family: Arial;}
+h1 {
+    background: navy;
+    color: white;
+    padding: 8px;
+    margin: -8px;
+}
+h2 {
+    padding: 0px;
+    margin: 0px;
+    margin-right: 50px;
+}
+button {
+    background: navy;
+    color: white;
+    border: none;
+}
+ul {
+    list-style: none;
+    margin: 0px;
+    border-right: 2px solid black;
+    padding-top: 0px;
+    padding-left: 5px;
+    padding-right: 20px
+
+}
+div#cList {
+    float: left;
+}
+#viz{
+    padding-left: 50px;
+}
+/*#viz2{
+    padding-left: 50px;
+    float: right;
+}*/
+circle {
+    fill: red;
+    opacity: 1;
+    /*stroke: none;*/
+}
+line {
+    stroke: navy;
+    stroke-width: 1;
+}
+.domain {
+    fill: none;
+    stroke: black;
+}
+#tooltip {
+    background-color: white;
+    border: solid 1px #000;
+    height: 70px;
+    width: 150px;
+    position: absolute;
+    display: none;
+}
+#countryName {
+    font-weight: bold;
+}
+.highlighted {
+    background: navy;
+    color: white;
+}
+div#Info{
+    padding-left: 50px;
+}
+/*.legend {
+    padding: 5px;
+    font: 10px sans-serif;
+    background: yellow;
+    box-shadow: 2px 2px 1px #888;
+}*/
