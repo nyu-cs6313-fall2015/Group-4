@@ -7,25 +7,28 @@
 	</head>
 
 	<body>
-        <p>
-            <label>Search: </label>
-            <input id = "emailName" type = "text" onkeyup = "prsButton(event, this.value)">
-            <button id = "goButton" type = "button" onclick = "getEmail()">GO</button>
-            <br>
-            <br>
-            <span id="selectUserBlock">
-                <select id="dropdown">
-                </select>
-            </span>
-        </p>
-
-        <div id = "listBlock">
-            <!-- <h2>SideBox</h2>
-            <br> -->
-            <ul id = "list"></ul>
+        <div id="topDiv">
+            <div id="selectUserBlock">
+                <div id="search">
+                    <label>Search: </label>
+                    <input id = "emailName" type = "text" onkeypress="javascript:return ((event.keyCode == 13) ? false : true)" onkeyup = "prsButton(event, this.value)">
+                    <button id = "goButton" type = "button" onclick = "getEmail()">GO</button>
+                </div>
+                <select id="dropdown"></select>
+            </div>
         </div>
-        <div id="vizBlock">
-            <svg id="viz"></svg>
+        <div id="btmDiv">
+            <div id="listBlock">
+                <div id="listHeaderBlock">
+                    <h1 id="listHeader"></h1>
+                </div>
+                <div id = "listBlockEntries">
+                    <ul id = "list"></ul>
+                </div>
+            </div>
+            <div id="vizBlock">
+                <svg id="viz"></svg>
+            </div>
         </div>
         <div id="tooltip" style="top: auto;">
             <span id="nodeNameDate" class="nodeDetails"></span>
@@ -34,11 +37,11 @@
                 <li id="nodeRecvd" class="nodeDetails"></li>
             </ul>
         </div>
-        <div id = "emailListBlock">
+        <div id="overlayBkgrd"></div>
+        <div id="emailListBlock">
+            <button id="closeEmailButton" type = "button" onclick = "closeEmailOverlay()">CLOSE</button>
             <ul id = "emailList"></ul>
         </div>
-        
-
         <script type="text/javascript">
             var abbr_list = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -57,8 +60,13 @@
                 if(res.length == 0) {
                     alert("No email address found for: " + x)
                 } else {
-                    Selection.init(res);
+                    Selection.select(res);
                 }
+            }
+            
+            function closeEmailOverlay() {
+                d3.select("#emailListBlock").style("display","none");
+                d3.select("#overlayBkgrd").style("display", "none");
             }
 
             function return_radius(area) {
@@ -172,35 +180,19 @@
                         self.endDate = new Date(data.end_date);
                         self.year_month_pairs = data.year_month_pairs;
                         
-                        Selection.init(null);
+                        Selection.init(self.user_list);
                     });
                 }
             }
             
             var Selection = {
-                init: function(chosen_user) {
-                    var user_list = Controller.user_list;
-
-                    if (chosen_user == null ) chosen_user = user_list[0];
-                    
+                init: function(user_list) {
+                    this.user_list = user_list;
                     this.ddown = d3.select("#dropdown").on('change', function() {
                         Selection.select(d3.select(this).property('value'));
                     });
-
-                    for (var i = 0; i < user_list.length; i++) {
-                        if (user_list[i] == chosen_user) {
-                            this.ddown.append("option")
-                                .attr("value", user_list[i])
-                                .attr("selected", "selected")
-                                .text(user_list[i]);
-                        } else {
-                            this.ddown.append("option")
-                                .attr("value", user_list[i])
-                                .text(user_list[i]);
-                        }
-                    }
                     
-                    Selection.select(chosen_user);
+                    Selection.select(user_list[0]);
                 },
                 
                 select: function(chosen_user) {
@@ -209,6 +201,18 @@
                     var date_limit = get_adjusted_date_limits(node_list);
                     var total_comm = get_other_users_numbers(node_list, other_users, chosen_user);
                     var payload = [node_list, other_users, date_limit, total_comm];
+                    
+                    var opt_elements = this.ddown.selectAll("option").data(this.user_list);
+                    opt_elements.exit().remove();
+                    
+                    opt_elements.enter().append("option");
+                    opt_elements.transition().attr({
+                        selected: function(d) {
+                            if (d == chosen_user) { return "selected"; }
+                            else { return null; }
+                        },
+                        value: function(d) { return d; },
+                    }).text(function(d) { return d; });
                     Dispatcher.notify('update', payload);
                 }
             }
@@ -366,10 +370,10 @@
                         Dispatcher.notify('onMouseout', d);
                     }).on('click', function(d) {
                         Dispatcher.notify('onMouseout', d);
-                        Selection.init(d.name);
+                        Selection.select(d.name);
                     }).on('contextmenu', function(d){
                         d3.event.preventDefault();
-                        emailList.call(d);
+                        EmailList.call(d);
                     });
                     node_elements.transition().attr({
                         r: function(d) { if (d.nSent == 0) { return 0; } else { return area_scale(return_radius(d.nSent)); } },
@@ -391,10 +395,10 @@
                         Dispatcher.notify('onMouseout', d);
                     }).on('click', function(d) {
                         Dispatcher.notify('onMouseout', d);
-                        Selection.init(d.name);
+                        Selection.select(d.name);
                     }).on('contextmenu', function(d){
                         d3.event.preventDefault();
-                        emailList.call(d);
+                        EmailList.call(d);
                     });
                     node_elements.transition().attr({
                         r: function(d) { if (d.nRecvd == 0) { return 0; } else { return area_scale(return_radius(d.nRecvd)); } },
@@ -571,35 +575,43 @@
                 update: function(payload) {
                     var self = this;
                     var total_comm = payload[3];
-
-                    this.list.selectAll("ul").remove();
-                    var selection = this.list.selectAll("ul").data(total_comm, function(d) { return d.name; });
                     
-                    selection.enter().append("ul").text(function(d) { return d.name + ":"; });
+                    var listHeaderData = total_comm.splice(0,1);
+                    listHeaderData = listHeaderData[0];
+                    console.log(listHeaderData);
+                    console.log(listHeaderData.name);
+                    
+                    var listHeader = d3.select("#listHeader");
+                    listHeader.text(listHeaderData.name);
+                    listHeader.selectAll("ul").remove();
+                    listHeader.append("ul");
+                    listHeader.select("ul").append("li").text("sent: " + listHeaderData.sent).classed("subList", true);
+                    listHeader.select("ul").append("li").text("received: " + listHeaderData.received).classed("subList", true);
+                    
+                    
+                    this.list.selectAll("li").remove();
+                    var selection = this.list.selectAll("li").data(total_comm, function(d) { return d.name; });
+                    
+                    selection.enter().append("li").text(function(d) { return d.name + ":"; });
                     selection
                         .on('mouseover', function(d, i) {
-                            if (i != 0)
-                                Dispatcher.notify('onMouseoverList', d);
+                            Dispatcher.notify('onMouseoverList', d);
                         }).on('mouseout', function(d, i) {
-                            if (i != 0)
-                                Dispatcher.notify('onMouseoutList', d);
+                            Dispatcher.notify('onMouseoutList', d);
                         }).on('click', function(d, i) {
-                            if (i != 0) {
-                                Dispatcher.notify('onMouseoutList', d);
-                                Selection.init(d.name);
-                            }
+                            Dispatcher.notify('onMouseoutList', d);
+                            Selection.select(d.name);
                         }).on('contextmenu', function(d, i){
                             if (i != 0) {
                                 d3.event.preventDefault();
-                                emailList.call(d);
+                                EmailList.call(d);
                             }
                         });
 
-                    selection.style("font-weight", "bold");
-                    selection.append("li").text(function(d) { return "sent: " + d.sent; }).classed('nodeDetails', true);
-                    selection.append("li").text(function(d) { return "received: " + d.received; }).classed('nodeDetails', true);
-                    
-                    this.list.selectAll("li").style("font-weight", "normal");
+                    selection.classed("upperList", true);
+                    selection.append("ul");
+                    selection.select("ul").append("li").text(function(d) { return "sent: " + d.sent; }).classed("subList", true);
+                    selection.select("ul").append("li").text(function(d) { return "received: " + d.received; }).classed("subList", true);
                 },
 
                 // getElement: function(d) {
@@ -607,7 +619,7 @@
                 // },
 
                 onMouseover: function(d) {
-                    this.list.selectAll("ul")
+                    this.list.selectAll("li")
                         .classed('highlighted', function(e) { return d.name == e.name });
                     // this.list.selectAll("li")
                     //     .style("background", "white")
@@ -629,21 +641,13 @@
                 }
             }
 
-            var emailList = {
+            var EmailList = {
                 init: function() {
                     this.list = d3.select("#emailListBlock").select("#emailList");
                 },
                 call: function(node) {
                     var self = this;
                     var email_dict = Controller.email_dict;
-
-                    // d3.select("#list").style({
-                    //     'display': 'none'
-                    // });
-
-                    // console.log(node);
-                    // console.log(node.sentIds);
-                    // console.log(email_dict);
 
                     this.list.selectAll("ul").remove();
                     var selection = this.list.selectAll("ul").data(node.sentIds.concat(node.recvdIds));
@@ -656,12 +660,14 @@
                     selection.append("li").text(function(d) { return email_dict[d].body; })
                         .style("padding-left", "20px")
                         .style("font-weight", "normal");
+                    d3.select("#emailListBlock").style("display", "block");
+                    d3.select("#overlayBkgrd").style("display", "block");
                 }
             }
 
             Timeline.init();
             SideBar.init();
-            emailList.init();
+            EmailList.init();
             Dispatcher.add(Timeline);
             Dispatcher.add(SideBar);
             Controller.init();
