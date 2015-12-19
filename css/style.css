@@ -1,20 +1,78 @@
-html, body, div, h1, h2, h3, span, ul, li{
+html, body, div, h1, h2, h3, span, ul, li, svg{
     margin: 0;
     padding: 0;
     border: 0;
     outline: 0;
     font-family: arial;
+    z-index: 0;
 }
 
-div#vizBlock {
-    width: 1100px;
-    height: 800px;
-/*    overflow: scroll;*/
-    float: left;
+div#topDiv {
+    width: 100%;
+    height: 60px;
+    position: fixed;
+    z-index: 100;
+    border-bottom: 1px solid black;
+    background-color: white;
 }
 
 div#selectUserBlock {
+    padding: 10px;
+    position: fixed;
+}
+
+div#btmDiv {
+    position: relative;
+    top: 60px;
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+}
+
+div#vizBlock {
+/*    overflow: scroll;*/
+    position: fixed;
+    left: 300px;
+    top: 40px;
+}
+
+div#listBlock {
+    position: absolute;
+    top: inherit;
+    width: 300px;
+}
+
+div#listHeaderBlock {
+    top: inherit;
+    position: fixed;
+    font-size: 6pt;
+    height: 55px;
+    width: 280px;
+    padding: 10px;
+    border-bottom: 1px solid black;
+    z-index: 98;
+    background-color: white;
+}
+
+/*
+div#listBlockEntries {
+    overflow-y: scroll;
     float: left;
+    height: inherit;
+    position: absolute;
+}
+*/
+
+div#listBlockEntries {
+    overflow-y: scroll;
+    float: left;
+    position: absolute;
+    top: 35px;
+    width: 270px;
+    margin-left: 5px;
+    padding: 10px;
+    border: 1px solid black;
+    font-size: 10pt;
 }
 
 svg {
@@ -24,10 +82,6 @@ svg {
 line {
     stroke: black;
     opacity: 0.25;
-}
-
-circle {
-    fill: red;
 }
 
 div#tooltip {
@@ -43,6 +97,79 @@ div#tooltip {
     position: absolute; /* removes the div from the flow of the HTML */
 }
 
+div#overlayBkgrd {
+    display: none;
+    background-color: gray;
+    opacity: 0.65;
+    height: 100%;
+    width: 100%;
+    z-index: 100;
+    min-width: 100%;
+    min-height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+div#emailListBlock {
+    border: 1px solid black;
+    display: none;
+    width: 75%;
+    position: absolute;
+    left: 50%;
+    margin-left: -37.5%;
+    background-color: white;
+    z-index: 101;
+    padding: 10px;
+}
+
+button#closeEmailButton {
+	-moz-box-shadow:inset 0px 1px 0px 0px #cf866c;
+	-webkit-box-shadow:inset 0px 1px 0px 0px #cf866c;
+	box-shadow:inset 0px 1px 0px 0px #cf866c;
+	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #d0451b), color-stop(1, #bc3315));
+	background:-moz-linear-gradient(top, #d0451b 5%, #bc3315 100%);
+	background:-webkit-linear-gradient(top, #d0451b 5%, #bc3315 100%);
+	background:-o-linear-gradient(top, #d0451b 5%, #bc3315 100%);
+	background:-ms-linear-gradient(top, #d0451b 5%, #bc3315 100%);
+	background:linear-gradient(to bottom, #d0451b 5%, #bc3315 100%);
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#d0451b', endColorstr='#bc3315',GradientType=0);
+	background-color:#d0451b;
+	-moz-border-radius:3px;
+	-webkit-border-radius:3px;
+	border-radius:3px;
+	border:1px solid #942911;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	font-family:Arial;
+	font-size:10px;
+	padding:3px 4px;
+	text-decoration:none;
+	text-shadow:0px 1px 0px #854629;
+    margin-bottom: 10px;
+}
+
+button#closeEmailButton:hover {
+	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #bc3315), color-stop(1, #d0451b));
+	background:-moz-linear-gradient(top, #bc3315 5%, #d0451b 100%);
+	background:-webkit-linear-gradient(top, #bc3315 5%, #d0451b 100%);
+	background:-o-linear-gradient(top, #bc3315 5%, #d0451b 100%);
+	background:-ms-linear-gradient(top, #bc3315 5%, #d0451b 100%);
+	background:linear-gradient(to bottom, #bc3315 5%, #d0451b 100%);
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#bc3315', endColorstr='#d0451b',GradientType=0);
+	background-color:#bc3315;
+}
+
+button#closeEmailButton:active {
+	position:relative;
+	top:1px;
+}
+
+div#emailListBlock li {
+    list-style-type: none;
+}
+
 nodeDetails {
     display: block;
 }
@@ -55,4 +182,31 @@ li.nodeDetails {
     padding-left: 20px;
     list-style-type: none;
 }
+
+li.upperList {
+    font-weight: bold;
+    list-style-type: none;
+}
+
+li.subList {
+    padding-left: 20px;
+    list-style-type: none;
+    font-weight: normal;
+}
+
+.highlighted {
+    background: navy;
+    color: white;
+}
+
+div#search {
+    float: left;
+    padding-right: 10px;
+}
+
+/*
+select#dropdown {
+    float: left;
+}
+*/
 
