@@ -448,12 +448,14 @@
                     for (var i = 0; i < rSize; i++) {
                         legend.append("circle")
                             .attr("r", area_scale(r[i].radius))
-                            .attr("cx", cx + rectW/3) 
+                            .attr("cx", cx + 2*area_scale(maxR))
+                            // .attr("cx", cx + rectW/3)
                             .attr("cy", r[i].height)
                             .style("fill", "navy");
 
                         legend.append("text")
-                            .attr("x", cx + rectW*2/3 )
+                            .attr("x", cx + 4.5*area_scale(maxR))
+                            // .attr("x", cx + rectW*2/3 )
                             .attr("y", r[i].height + 4 )
                             .style("font-size", "100%")
                             .text( return_area(r[i].radius) );
