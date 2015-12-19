@@ -7,12 +7,25 @@
 	</head>
 
 	<body>
+        <p>
+            <label>Search: </label>
+            <input id = "emailName" type = "text" onkeyup = "prsButton(event, this.value)">
+            <button id = "goButton" type = "button" onclick = "getEmail()">GO</button>
+            <br>
+            <br>
+            <span id="selectUserBlock">
+                <select id="dropdown">
+                </select>
+            </span>
+        </p>
+
+        <div id = "listBlock">
+            <!-- <h2>SideBox</h2>
+            <br> -->
+            <ul id = "list"></ul>
+        </div>
         <div id="vizBlock">
             <svg id="viz"></svg>
-        </div>
-        <div id="selectUserBlock">
-            <select id="dropdown">
-            </select>
         </div>
         <div id="tooltip" style="top: auto;">
             <span id="nodeNameDate" class="nodeDetails"></span>
@@ -21,32 +34,51 @@
                 <li id="nodeRecvd" class="nodeDetails"></li>
             </ul>
         </div>
+        <div id = "emailListBlock">
+            <ul id = "emailList"></ul>
+        </div>
+        
+
         <script type="text/javascript">
-            var startDate;
-            var endDate;
-            var data_obj;
-            var user_list;
-            var email_dict;
-            var user_data_dict;
-            var year_month_pairs;
             var abbr_list = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-            d3.json("data.json", function(data) {
-                data_obj = data;
-                user_list = data_obj.user_list.sort();
-                email_dict = data_obj.emails;
-                user_data_dict = data_obj.user_data;
-                startDate = new Date(data_obj.start_date);
-                endDate = new Date(data_obj.end_date);
-    //            console.log(user_data_dict);
-                year_month_pairs = data_obj.year_month_pairs;
-                Controller.init();
-            });
+            function prsButton(event, value){
+                if (event.keyCode == 13)
+                    document.getElementById('goButton').click();
+            }
+
+            function getEmail(){
+                var x = document.getElementById("emailName").value;
+
+                var res = Controller.user_list.filter(function(d) {
+                    return d == x;
+                })
+
+                if(res.length == 0) {
+                    alert("No email address found for: " + x)
+                } else {
+                    Selection.init(res);
+                }
+            }
+
+            function return_radius(area) {
+                return Math.sqrt(area/Math.PI);
+            }
+
+            function return_area(radius) {
+                // return Math.exp(Math.round(Math.PI*Math.pow(radius, 2)));
+                // return Math.round(Math.PI*Math.pow(radius, 2));
+                return Math.round(Math.PI*Math.pow(radius, 2));
+            }
             
             function get_node_list(chosen_user) {
+                var user_data_dict = Controller.user_data_dict;
                 var node_list = [];
                 for (pair in user_data_dict[chosen_user]) {
                     for (other_user in user_data_dict[chosen_user][pair]) {
+
+                        // console.log(user_data_dict[chosen_user][pair][other_user]['sent']['message_ids']);
+
                         node = {
                             name: other_user,
                             date: new Date(pair),
@@ -57,10 +89,43 @@
                             recvdIds: user_data_dict[chosen_user][pair][other_user]['received']['message_ids']
                         };
                         node_list.push(node);
-//                        console.log(node.date.getDate());
                     }
                 }
+
                 return node_list
+            }
+
+            function get_other_users_numbers(node_list, other_users, chosen_user) {
+                var total_comm = [];
+                total_comm[0] = {};
+                total_comm[0]["name"] = "Total (" + chosen_user + ")";
+                total_comm[0]["received"] = 0;
+                total_comm[0]["sent"] = 0;
+                total_comm[0]["recvdIds"] = [];
+                total_comm[0]["sentIds"] = [];
+
+                for (var i = 1; i <= other_users.length; i++) {
+                    total_comm[i] = {};
+                    total_comm[i]["name"] = other_users[i-1];
+                    total_comm[i]["received"] = 0;
+                    total_comm[i]["sent"] = 0;
+                    total_comm[i]["recvdIds"] = [];
+                    total_comm[i]["sentIds"] = [];
+                }
+                for (var i = 0; i < node_list.length; i++) {
+                    var j = other_users.indexOf(node_list[i].name);
+                    total_comm[j+1].received += node_list[i].nRecvd;
+                    total_comm[j+1].sent += node_list[i].nSent;
+                    total_comm[j+1]["recvdIds"] = total_comm[j+1]["recvdIds"].concat(node_list[i].recvdIds); 
+                    total_comm[j+1]["sentIds"] = total_comm[j+1]["sentIds"].concat(node_list[i].sentIds);
+
+                    total_comm[0].received += node_list[i].nRecvd;
+                    total_comm[0].sent += node_list[i].nSent;
+                    total_comm[0]["recvdIds"] = total_comm[0]["recvdIds"].concat(node_list[i].recvdIds); 
+                    total_comm[0]["sentIds"] = total_comm[0]["sentIds"].concat(node_list[i].sentIds);
+                }
+
+                return total_comm;
             }
             
             function get_other_users(node_list) {
@@ -70,7 +135,8 @@
                         other_users.push(node_list[i].name);
                     }
                 }
-                return other_users;
+
+                return other_users.sort();
             }
             
             function get_adjusted_date_limits(node_list) {
@@ -87,47 +153,63 @@
                         max_date = node_list[i].date;
                     }
                 }
-                return [min_date, max_date];
+                var dates = [];
+                for (var dt = new Date(min_date); dt <= new Date(max_date); dt.setMonth(dt.getMonth() + 1)) {
+                    dates.push(new Date(dt));
+                }
+
+                return dates;
             }
             
             var Controller = {
                 init: function() {
-                    Timeline.init();
-                    Dispatcher.add(Timeline);
-                    Selection.init();
-//                    Dispatcher.add(Selection);
+                    self = this;
+                    d3.json("data.json", function(data) {
+                        self.user_list = data.user_list.sort();
+                        self.email_dict = data.emails;
+                        self.user_data_dict = data.user_data;
+                        self.startDate = new Date(data.start_date);
+                        self.endDate = new Date(data.end_date);
+                        self.year_month_pairs = data.year_month_pairs;
+                        
+                        Selection.init(null);
+                    });
                 }
             }
             
             var Selection = {
-                init: function() {
+                init: function(chosen_user) {
+                    var user_list = Controller.user_list;
+
+                    if (chosen_user == null ) chosen_user = user_list[0];
+                    
                     this.ddown = d3.select("#dropdown").on('change', function() {
                         Selection.select(d3.select(this).property('value'));
                     });
+
                     for (var i = 0; i < user_list.length; i++) {
-                        if (i == 0) {
+                        if (user_list[i] == chosen_user) {
                             this.ddown.append("option")
-                                .attr("value",user_list[i])
-                                .attr("selected","selected")
+                                .attr("value", user_list[i])
+                                .attr("selected", "selected")
                                 .text(user_list[i]);
                         } else {
                             this.ddown.append("option")
-                                .attr("value",user_list[i])
+                                .attr("value", user_list[i])
                                 .text(user_list[i]);
                         }
                     }
                     
-                    Selection.select(user_list[0]);
+                    Selection.select(chosen_user);
                 },
                 
                 select: function(chosen_user) {
-                    this.chosen_user = chosen_user;
-                    var node_list = get_node_list(this.chosen_user)
+                    var node_list = get_node_list(chosen_user)
                     var other_users = get_other_users(node_list);
                     var date_limit = get_adjusted_date_limits(node_list);
-                    var payload = [node_list, other_users, date_limit];
+                    var total_comm = get_other_users_numbers(node_list, other_users, chosen_user);
+                    var payload = [node_list, other_users, date_limit, total_comm];
                     Dispatcher.notify('update', payload);
-//                    var node_list = get_node_list("jeff.dasovich@enron.com")
                 }
             }
             
@@ -146,30 +228,41 @@
                 }
             }
             
-            var SVG_WIDTH = 1100;
-            var SVG_HEIGHT = 770;
-            var Y_AXIS_OFFSET_X = 200;
-            var Y_AXIS_OFFSET_Y = 0;
-            var X_AXIS_OFFSET_X = Y_AXIS_OFFSET_X - 40;
-            var X_AXIS_OFFSET_Y = SVG_HEIGHT - 40;
-            var Y_AXIS_RANGE_LOW = 10;
-            var Y_AXIS_RANGE_HIGH = SVG_HEIGHT - 40;
-            var X_AXIS_RANGE_LOW = 40;
-            var X_AXIS_RANGE_HIGH = SVG_WIDTH - Y_AXIS_RANGE_LOW - X_AXIS_OFFSET_X;
-            
             var Timeline = {
                 init: function() {
-//                    
+                    this.MIN_R = 5;
+                    this.MAX_R = 15;
+
+                    this.RANGE = 1000;
+                    this.LEGEND_X = 100;
+                    this.SVG_WIDTH = this.RANGE + this.LEGEND_X;
+                    this.SVG_HEIGHT = 750;
+
+                    this.X_AXIS_OFFSET_Y = this.SVG_HEIGHT - 50;
+                    this.Y_AXIS_OFFSET_X = 200;
+                    this.X_AXIS_OFFSET_X = 0;
+                    this.Y_AXIS_OFFSET_Y = 0;
+
+                    this.X_AXIS_RANGE_LOW = this.Y_AXIS_OFFSET_X;
+                    this.X_AXIS_RANGE_HIGH = this.RANGE - 30;
+                    this.Y_AXIS_RANGE_LOW = 40;
+                    this.Y_AXIS_RANGE_HIGH = this.X_AXIS_OFFSET_Y;
+
                     //Set dimensions of the viz
-                    d3.select("#viz").attr("width", SVG_WIDTH);
-                    d3.select("#viz").attr("height", SVG_HEIGHT);
+                    d3.select("#viz").attr("width", this.SVG_WIDTH);
+                    d3.select("#viz").attr("height", this.SVG_HEIGHT);
+                    d3.select("#viz").append("g").attr("id", "x_lines");
+                    d3.select("#viz").append("g").attr("id", "y_lines");
+                    d3.select("#viz").append("g").attr("id", "nodesSent");
+                    d3.select("#viz").append("g").attr("id", "nodesReceived");
+                    d3.select("#viz").append("g").attr("id", "legend");
                     
                     this.x_scale = d3.time.scale();
-                    this.x_scale.range([X_AXIS_RANGE_LOW, X_AXIS_RANGE_HIGH]);
+                    this.x_scale.range([this.X_AXIS_RANGE_LOW, this.X_AXIS_RANGE_HIGH]);
                     
                     //Establish Y scale
                     this.y_scale = d3.scale.ordinal();
-                    this.y_scale.rangePoints([Y_AXIS_RANGE_LOW, Y_AXIS_RANGE_HIGH], 1);
+                    this.y_scale.rangePoints([this.Y_AXIS_RANGE_LOW, this.Y_AXIS_RANGE_HIGH], 1);
                     
                     //Establish X axis
                     this.x_axis = d3.svg.axis(); 
@@ -188,27 +281,26 @@
                     this.y_axis.orient("left");
                     
                     this.x_axis
-                        .tickSize(-X_AXIS_OFFSET_Y, 0);
+                        .tickSize(10,0);
                     this.y_axis
-                        .tickSize(-SVG_WIDTH, 0);
+                        .tickSize(20,0);
                     
                     //Append the axis
                     this.x_axis_group = d3.select("#viz")
                         .append("g")
-                        .attr("transform", "translate(" + String(X_AXIS_OFFSET_X) + "," + X_AXIS_OFFSET_Y + ")");
+                        .attr("transform", "translate(" + this.X_AXIS_OFFSET_X + "," + this.X_AXIS_OFFSET_Y + ")");
                     this.y_axis_group = d3.select("#viz")
                         .append("g")
-                        .attr("transform", "translate(" + String(Y_AXIS_OFFSET_X) + "," + String(Y_AXIS_OFFSET_Y) + ")");
+                        .attr("transform", "translate(" + this.Y_AXIS_OFFSET_X + "," + this.Y_AXIS_OFFSET_Y + ")");
                 },
                 
                 update: function(payload) {
                     var self = this;
                     var node_list = payload[0];
                     var other_users = payload[1];
-                    var adj_startDate = payload[2][0];
-                    var adj_endDate = payload[2][1];
+                    var dates = payload[2];
                     
-                    this.x_scale.domain([adj_startDate, adj_endDate]);
+                    this.x_scale.domain([dates[0], dates[dates.length-1]]);
                     this.y_scale.domain(other_users);
                     
                     this.x_axis_group.transition().call(this.x_axis)
@@ -220,47 +312,220 @@
                     this.y_axis_group.transition().call(this.y_axis);
                     
                     var svg = d3.select("#viz");
-                    var node_elements = svg.selectAll("circle").data(node_list);
+
+                    var x_lines = svg.select("#x_lines").selectAll("line").data(other_users);
+                    x_lines.exit().remove();
+
+                    x_lines.enter().append("line");
+                    x_lines.attr({
+                        x1: self.X_AXIS_RANGE_LOW,
+                        y1: function(d) { return self.y_scale(d); },
+                        x2: self.X_AXIS_RANGE_HIGH,
+                        y2: function(d) { return self.y_scale(d); }
+                    });
+
+                    var y_lines = svg.select("#y_lines").selectAll("line").data(dates);
+                    y_lines.exit().remove();
+
+                    y_lines.enter().append("line");
+                    y_lines.attr({
+                        x1: function(d) { return self.x_scale(d); },
+                        y1: self.Y_AXIS_RANGE_LOW,
+                        x2: function(d) { return self.x_scale(d); },
+                        y2: self.Y_AXIS_RANGE_HIGH
+                    })
+
+                    var maxR = 0;
+                    var minR = return_radius(node_list[0].nTotal);
+                    for (var i = 0; i < node_list.length; i++) {
+                        var r = return_radius(node_list[i].nSent);
+                        if (r > 0) {
+                            if (r > maxR) { maxR = r; };
+                            if (r < minR) { minR = r; };
+                        }
+                        r = return_radius(node_list[i].nRecvd);
+                        if (r > 0) {
+                            if (r > maxR) { maxR = r; };
+                            if (r < minR) { minR = r; };
+                        }
+                    };
+
+                    var area_scale = d3.scale.linear();
+                    // var area_scale = d3.scale.log();
+                    area_scale.range([self.MIN_R, self.MAX_R]);
+                    area_scale.domain([minR, maxR]);
+
+                    var node_elements = svg.select("#nodesSent").selectAll("circle").data(node_list);
                     node_elements.exit().remove();
                     
-                    var min_rad = null;
-                    var max_rad = null;
-                    
-                    for (var i = 0; i < node_list.length; i++) {
-                        var node = node_list[i];
-                        var curr_rad = return_radius(node);
-                        if (min_rad == null) { min_rad = curr_rad; }
-                        if (max_rad == null) { max_rad = curr_rad; }
-                        if (min_rad > curr_rad) { min_rad = curr_rad; }
-                        if (max_rad < curr_rad) { max_rad = curr_rad; }
-                    }
-                    
-                    var area_scale = d3.scale.linear();
-                    area_scale.range([5, 15]);
-                    area_scale.domain([min_rad, max_rad]);
-                    
-                    node_elements.enter().append("circle")
+                    node_elements.enter().append("circle");
+                    node_elements
                         .on('mouseover', function(d) {
                         Dispatcher.notify('onMouseover', d);
                     }).on('mouseout', function(d) {
                         Dispatcher.notify('onMouseout', d);
+                    }).on('click', function(d) {
+                        Dispatcher.notify('onMouseout', d);
+                        Selection.init(d.name);
+                    }).on('contextmenu', function(d){
+                        d3.event.preventDefault();
+                        emailList.call(d);
                     });
                     node_elements.transition().attr({
-                        r: function(d) { return area_scale(return_radius(d)); },
-                        cx: function(d) { return X_AXIS_OFFSET_X + self.x_scale(d.date) },
+                        r: function(d) { if (d.nSent == 0) { return 0; } else { return area_scale(return_radius(d.nSent)); } },
+                        cx: function(d) { return self.x_scale(d.date) },
                         cy: function(d) { return self.y_scale(d.name) }
                     });
+                    node_elements
+                        .style("fill", "red")
+                        .style("opacity", 0.7);
+
+                    var node_elements = svg.select("#nodesReceived").selectAll("circle").data(node_list);
+                    node_elements.exit().remove();
+                    
+                    node_elements.enter().append("circle");
+                    node_elements
+                        .on('mouseover', function(d) {
+                        Dispatcher.notify('onMouseover', d);
+                    }).on('mouseout', function(d) {
+                        Dispatcher.notify('onMouseout', d);
+                    }).on('click', function(d) {
+                        Dispatcher.notify('onMouseout', d);
+                        Selection.init(d.name);
+                    }).on('contextmenu', function(d){
+                        d3.event.preventDefault();
+                        emailList.call(d);
+                    });
+                    node_elements.transition().attr({
+                        r: function(d) { if (d.nRecvd == 0) { return 0; } else { return area_scale(return_radius(d.nRecvd)); } },
+                        cx: function(d) { return self.x_scale(d.date) },
+                        cy: function(d) { return self.y_scale(d.name) }
+                    });
+                    node_elements
+                        .style("fill", "green")
+                        .style("opacity", 0.7);
+
+                    d3.select("#legend").remove();
+                    d3.select("#viz").append("g").attr("id", "legend");
+
+                    // Legend
+                    if (return_area(maxR) == return_area(minR)) {
+                        var rSize = 1; // geoff.storey@enron.com
+                    }
+                    else if (return_area(maxR) == return_area(minR)+1) {
+                        var rSize = 2; // dan.hyvl@enron.com
+                    }
+                    else if (return_area(maxR) > return_area(minR)+1) {
+                        var rSize = 3;
+                    }
+
+                    var rMargin = 15;
+                    
+                    var r = [ { "radius": minR, "height": (self.X_AXIS_OFFSET_Y - area_scale(minR) - rMargin), } ];
+
+                    for (var i = 1; i < rSize; i++) {
+                        r.push({ "radius": minR + ((maxR - minR) / (rSize - 1)) * i });
+                        r[i].height = r[i-1].height - area_scale(r[i-1].radius) - rMargin - area_scale(r[i].radius);
+                    };
+
+                    var rectW = 6 * area_scale(maxR);
+                    var rectHh = self.X_AXIS_OFFSET_Y;
+                    var rectHl = r[rSize-1].height - area_scale(r[rSize-1].radius) - rMargin;
+                    var rectH = rectHh - rectHl;
+
+                    var legend = d3.select("#legend");
+
+                    var cx = self.RANGE;
+                    legend.append("rect")
+                        .attr("x", cx)
+                        .attr("y", rectHl)
+                        .attr("width", rectW)
+                        .attr("height", rectH)
+                        .style("fill", "none")
+                        .style("stroke", "eeeeee")
+                        .style("stroke-width", "2")
+
+                    for (var i = 0; i < rSize; i++) {
+                        legend.append("circle")
+                            .attr("r", area_scale(r[i].radius))
+                            .attr("cx", cx + rectW/3) 
+                            .attr("cy", r[i].height)
+                            .style("fill", "navy");
+
+                        legend.append("text")
+                            .attr("x", cx + rectW*2/3 )
+                            .attr("y", r[i].height + 4 )
+                            .style("font-size", "100%")
+                            .text( return_area(r[i].radius) );
+                    }
+
+                    var colorRectH = 20;
+                    var colorRectW = 20;
+                    var safety = 20;
+                    var dist = 20;
+                    var rectH1 = rectHl - safety - colorRectH;
+                    var rectH2 = rectH1 - safety - colorRectH;
+
+                    legend.append("rect")
+                        .attr("x", cx)
+                        .attr("y", rectH1)
+                        .attr("width", colorRectW)
+                        .attr("height", colorRectH)
+                        .style("fill", "red")
+
+                    legend.append("text")
+                            .attr("x", cx + colorRectW + 10 )
+                            .attr("y", rectH1 + colorRectH*2/3 )
+                            .style("font-size", "100%")
+                            .text( "Sent" );
+
+                    legend.append("rect")
+                        .attr("x", cx)
+                        .attr("y", rectH2)
+                        .attr("width", colorRectW)
+                        .attr("height", colorRectH)
+                        .style("fill", "green")
+
+                    legend.append("text")
+                            .attr("x", cx + colorRectW + 10 )
+                            .attr("y", rectH2 + colorRectH*2/3 )
+                            .style("font-size", "100%")
+                            .text( "Received" );
                 }, 
                 
-                getItem: function(d) {
-                    return d3.select("#viz").selectAll("circle").filter(function(e) {
+                getItemSent: function(d) {
+                    return d3.select("#nodesSent").selectAll("circle").filter(function(e) {
                         return ((d.name == e.name) && (d.date == e.date));
+                    });
+                },
+
+                getItemReceived: function(d) {
+                    return d3.select("#nodesReceived").selectAll("circle").filter(function(e) {
+                        return ((d.name == e.name) && (d.date == e.date));
+                    });
+                },
+
+                getXLine: function(d) {
+                    return d3.select("#x_lines").selectAll("line").filter(function(e) {
+                        return (d.name == e);
+                    });
+                },
+
+                getYLine: function(d) {
+                    return d3.select("#y_lines").selectAll("line").filter(function(e) {
+                        return ((d.date.getMonth() == e.getMonth()) && (d.date.getFullYear() == e.getFullYear()));
                     });
                 },
                 
                 onMouseover: function(d) {
-                    this.getItem(d)
+                    this.getItemSent(d)
                         .style("fill", "orange");
+                    this.getItemReceived(d)
+                        .style("fill", "aqua");
+                    this.getXLine(d)
+                        .style("opacity", 1);
+                    this.getYLine(d)
+                        .style("opacity", 1);
                     var tooltip = d3.select("#tooltip");
                     tooltip.select("#nodeNameDate").text(d.name + " - " + abbr_list[d.date.getMonth()] + " " + String(d.date.getFullYear()) + ":");
                     tooltip.select("#nodeSent").text("sent: " + String(d.nSent));
@@ -269,21 +534,136 @@
                     tooltip.style("top", ((d3.event.y) + 10) + "px");	
                     tooltip.style("left", ((d3.event.x) + 10) + "px");
                 },
+
+                onMouseoverList: function(d) {
+                    this.getXLine(d)
+                        .style("opacity", 1);
+                },
                 
                 onMouseout: function(d) {
-                    this.getItem(d)
+                    this.getItemSent(d)
                         .style("fill", "red");
+                    this.getItemReceived(d)
+                        .style("fill", "green");
+                    this.getXLine(d)
+                        .style("opacity", 0.25);
+                    this.getYLine(d)
+                        .style("opacity", 0.25);
                     d3.select("#tooltip").style("display", "none");
+                },
+
+                onMouseoutList: function(d) {
+                    this.getItemSent(d)
+                        .style("fill", "red");
+                    this.getItemReceived(d)
+                        .style("fill", "navy");
+                    this.getXLine(d)
+                        .style("opacity", 0.25);
                 }
             }
-            
-            function return_radius(d) {
-                if (d.nTotal == 0) { return 0; } 
-                var pi = 3.14;
-                var result = Math.sqrt(d.nTotal/pi);
-                return result;
+
+            var SideBar = {
+                init: function() {
+                    this.list = d3.select("#listBlock").select("#list");
+                },
+                update: function(payload) {
+                    var self = this;
+                    var total_comm = payload[3];
+
+                    this.list.selectAll("ul").remove();
+                    var selection = this.list.selectAll("ul").data(total_comm, function(d) { return d.name; });
+                    
+                    selection.enter().append("ul").text(function(d) { return d.name + ":"; });
+                    selection
+                        .on('mouseover', function(d, i) {
+                            if (i != 0)
+                                Dispatcher.notify('onMouseoverList', d);
+                        }).on('mouseout', function(d, i) {
+                            if (i != 0)
+                                Dispatcher.notify('onMouseoutList', d);
+                        }).on('click', function(d, i) {
+                            if (i != 0) {
+                                Dispatcher.notify('onMouseoutList', d);
+                                Selection.init(d.name);
+                            }
+                        }).on('contextmenu', function(d, i){
+                            if (i != 0) {
+                                d3.event.preventDefault();
+                                emailList.call(d);
+                            }
+                        });
+
+                    selection.style("font-weight", "bold");
+                    selection.append("li").text(function(d) { return "sent: " + d.sent; }).classed('nodeDetails', true);
+                    selection.append("li").text(function(d) { return "received: " + d.received; }).classed('nodeDetails', true);
+                    
+                    this.list.selectAll("li").style("font-weight", "normal");
+                },
+
+                // getElement: function(d) {
+                //     // return this.list.selectAll("li").filter(function(e) { return d.name == e.name });
+                // },
+
+                onMouseover: function(d) {
+                    this.list.selectAll("ul")
+                        .classed('highlighted', function(e) { return d.name == e.name });
+                    // this.list.selectAll("li")
+                    //     .style("background", "white")
+                    //     .style("color", "black")
+                        // .classed('notHighlighted', true)
+                },
+
+                onMouseoverList: function(d) {
+                    this.onMouseover(d);
+                },
+
+                onMouseout: function(d) {
+                    this.list.selectAll("ul")
+                        .classed('highlighted', false)
+                },
+
+                onMouseoutList: function(d) {
+                    this.onMouseout(d);
+                }
             }
-            
+
+            var emailList = {
+                init: function() {
+                    this.list = d3.select("#emailListBlock").select("#emailList");
+                },
+                call: function(node) {
+                    var self = this;
+                    var email_dict = Controller.email_dict;
+
+                    // d3.select("#list").style({
+                    //     'display': 'none'
+                    // });
+
+                    // console.log(node);
+                    // console.log(node.sentIds);
+                    // console.log(email_dict);
+
+                    this.list.selectAll("ul").remove();
+                    var selection = this.list.selectAll("ul").data(node.sentIds.concat(node.recvdIds));
+                    
+                    selection.enter().append("ul").text(function(d) { console.log(email_dict[d].cc); return "Subject: " + email_dict[d].subject; })
+
+                    selection.style("font-weight", "bold");
+                    selection.append("li").text(function(d) { return "From: " + email_dict[d].from; })
+                    selection.append("li").text(function(d) { return "To: " + email_dict[d].to; })
+                    selection.append("li").text(function(d) { return email_dict[d].body; })
+                        .style("padding-left", "20px")
+                        .style("font-weight", "normal");
+                }
+            }
+
+            Timeline.init();
+            SideBar.init();
+            emailList.init();
+            Dispatcher.add(Timeline);
+            Dispatcher.add(SideBar);
+            Controller.init();
+
         </script>
 	</body>
 </html>
