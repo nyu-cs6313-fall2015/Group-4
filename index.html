@@ -602,10 +602,8 @@
                             Dispatcher.notify('onMouseoutList', d);
                             Selection.select(d.name);
                         }).on('contextmenu', function(d, i){
-                            if (i != 0) {
-                                d3.event.preventDefault();
-                                EmailList.call(d);
-                            }
+                            d3.event.preventDefault();
+                            EmailList.call(d);
                         });
 
                     selection.classed("upperList", true);
@@ -651,18 +649,42 @@
 
                     this.list.selectAll("ul").remove();
                     var selection = this.list.selectAll("ul").data(node.sentIds.concat(node.recvdIds));
+                    selection.enter().append("ul").classed("fullEmail", true);
                     
-                    selection.enter().append("ul").text(function(d) { console.log(email_dict[d].cc); return "Subject: " + email_dict[d].subject; })
-
-                    selection.style("font-weight", "bold");
-                    selection.append("li").text(function(d) { return "From: " + email_dict[d].from; })
-                    selection.append("li").text(function(d) { return "To: " + email_dict[d].to; })
-                    selection.append("li").text(function(d) { return email_dict[d].body; })
-                        .style("padding-left", "20px")
-                        .style("font-weight", "normal");
+                    var header = selection.append("li").classed("emailHeader", true).append("ul");
+                    var subj = header.append("li");
+                    subj.append("span").text("Subject:").classed("emailDetailHeader", true);
+                    subj.append("span").text(function(d) { return email_dict[d].subject; });
+                    var from = header.append("li");
+                    from.append("span").text("From:").classed("emailDetailHeader", true);
+                    from.append("span").text(function(d) { return email_dict[d].from; })
+                    var to = header.append("li");
+                    to.append("span").text("To:").classed("emailDetailHeader", true);
+                    to.append("span").text(function(d) { return formatListToString(email_dict[d].to); });
+                    var cc = header.append("li");
+                    cc.append("span").text("Cc:").classed("emailDetailHeader", true);
+                    cc.append("span").text(function(d) { return formatListToString(email_dict[d].cc); })
+                    var bcc = header.append("li");
+                    bcc.append("span").text("Bcc:").classed("emailDetailHeader", true);
+                    bcc.append("span").text(function(d) { return formatListToString(email_dict[d].bcc); })
+                    
+                    var body = selection.append("li");
+                    body.text(function(d) { return email_dict[d].body; })
+                        .classed("emailBody", true);
                     d3.select("#emailListBlock").style("display", "block");
                     d3.select("#overlayBkgrd").style("display", "block");
                 }
+            }
+            
+            function formatListToString(listToFormat) {
+                var s = "";
+                if (listToFormat.length > 0) {
+                    for (var i=0; i < (listToFormat.length - 1); i++) {
+                        s = s + listToFormat[i] + ", "
+                    }
+                    s = s + listToFormat[listToFormat.length - 1];
+                }
+                return s;
             }
 
             Timeline.init();

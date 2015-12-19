@@ -123,6 +123,21 @@ div#emailListBlock {
     padding: 10px;
 }
 
+li.emailBody {
+    white-space: pre-wrap;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
+    font-weight: normal;
+}
+
+ul.fullEmail {
+    border: 1px solid black;
+    margin-bottom: 5px;
+    padding: 5px;
+}
+
 button#closeEmailButton {
 	-moz-box-shadow:inset 0px 1px 0px 0px #cf866c;
 	-webkit-box-shadow:inset 0px 1px 0px 0px #cf866c;
@@ -168,6 +183,20 @@ button#closeEmailButton:active {
 
 div#emailListBlock li {
     list-style-type: none;
+}
+
+div#emailListBlock li span {
+    display: inline;
+}
+
+li.emailHeader {
+    border: 2px dashed black;
+    padding: 5px;
+}
+
+span.emailDetailHeader {
+    margin-right: 5px;
+    font-weight: bold;
 }
 
 nodeDetails {
