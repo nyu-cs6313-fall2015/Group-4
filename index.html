@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+	<head>
+        <title>Visualizing Trends in Email Communication</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+        <link rel="stylesheet" type="text/css" href="css/style.css">
+	</head>
+
+	<body>
+        <div id="vizBlock">
+            <svg id="viz"></svg>
+        </div>
+        <div id="selectUserBlock">
+            <select id="dropdown">
+            </select>
+        </div>
+        <div id="tooltip" style="top: auto;">
+            <span id="nodeNameDate" class="nodeDetails"></span>
+            <ul>
+                <li id="nodeSent" class="nodeDetails"></li>
+                <li id="nodeRecvd" class="nodeDetails"></li>
+            </ul>
+        </div>
+        <script type="text/javascript">
+            var startDate;
+            var endDate;
+            var data_obj;
+            var user_list;
+            var email_dict;
+            var user_data_dict;
+            var year_month_pairs;
+            var abbr_list = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+            d3.json("data.json", function(data) {
+                data_obj = data;
+                user_list = data_obj.user_list.sort();
+                email_dict = data_obj.emails;
+                user_data_dict = data_obj.user_data;
+                startDate = new Date(data_obj.start_date);
+                endDate = new Date(data_obj.end_date);
+    //            console.log(user_data_dict);
+                year_month_pairs = data_obj.year_month_pairs;
+                Controller.init();
+            });
+            
+            function get_node_list(chosen_user) {
+                var node_list = [];
+                for (pair in user_data_dict[chosen_user]) {
+                    for (other_user in user_data_dict[chosen_user][pair]) {
+                        node = {
+                            name: other_user,
+                            date: new Date(pair),
+                            nSent: user_data_dict[chosen_user][pair][other_user]['sent']['count'],
+                            nRecvd: user_data_dict[chosen_user][pair][other_user]['received']['count'],
+                            nTotal: user_data_dict[chosen_user][pair][other_user]['sent']['count'] + user_data_dict[chosen_user][pair][other_user]['received']['count'],
+                            sentIds: user_data_dict[chosen_user][pair][other_user]['sent']['message_ids'],
+                            recvdIds: user_data_dict[chosen_user][pair][other_user]['received']['message_ids']
+                        };
+                        node_list.push(node);
+//                        console.log(node.date.getDate());
+                    }
+                }
+                return node_list
+            }
+            
+            function get_other_users(node_list) {
+                var other_users = [];
+                for (var i = 0; i < node_list.length; i++) {
+                    if (other_users.indexOf(node_list[i].name) < 0) {
+                        other_users.push(node_list[i].name);
+                    }
+                }
+                return other_users;
+            }
+            
+            function get_adjusted_date_limits(node_list) {
+                var max_date = null;
+                var min_date = null;
+                
+                for (var i = 0; i < node_list.length; i++) {
+                    if (min_date == null) {min_date = node_list[i].date;}
+                    if (max_date == null) {max_date = node_list[i].date;}
+                    if (min_date > node_list[i].date) {
+                        min_date = node_list[i].date;
+                    }
+                    if (max_date < node_list[i].date) {
+                        max_date = node_list[i].date;
+                    }
+                }
+                return [min_date, max_date];
+            }
+            
+            var Controller = {
+                init: function() {
+                    Timeline.init();
+                    Dispatcher.add(Timeline);
+                    Selection.init();
+//                    Dispatcher.add(Selection);
+                }
+            }
+            
+            var Selection = {
+                init: function() {
+                    this.ddown = d3.select("#dropdown").on('change', function() {
+                        Selection.select(d3.select(this).property('value'));
+                    });
+                    for (var i = 0; i < user_list.length; i++) {
+                        if (i == 0) {
+                            this.ddown.append("option")
+                                .attr("value",user_list[i])
+                                .attr("selected","selected")
+                                .text(user_list[i]);
+                        } else {
+                            this.ddown.append("option")
+                                .attr("value",user_list[i])
+                                .text(user_list[i]);
+                        }
+                    }
+                    
+                    Selection.select(user_list[0]);
+                },
+                
+                select: function(chosen_user) {
+                    this.chosen_user = chosen_user;
+                    var node_list = get_node_list(this.chosen_user)
+                    var other_users = get_other_users(node_list);
+                    var date_limit = get_adjusted_date_limits(node_list);
+                    var payload = [node_list, other_users, date_limit];
+                    Dispatcher.notify('update', payload);
+//                    var node_list = get_node_list("jeff.dasovich@enron.com")
+                }
+            }
+            
+            var Dispatcher = {
+                add: function(view) {
+                    if(!this.subscribers) { 
+                        this.subscribers = [];
+                    }
+                    this.subscribers.push(view);
+                },
+                
+                notify: function(type, payload) {
+                    this.subscribers.forEach(function(s) {
+                        s[type](payload);
+                    });
+                }
+            }
+            
+            var SVG_WIDTH = 1100;
+            var SVG_HEIGHT = 770;
+            var Y_AXIS_OFFSET_X = 200;
+            var Y_AXIS_OFFSET_Y = 0;
+            var X_AXIS_OFFSET_X = Y_AXIS_OFFSET_X - 40;
+            var X_AXIS_OFFSET_Y = SVG_HEIGHT - 40;
+            var Y_AXIS_RANGE_LOW = 10;
+            var Y_AXIS_RANGE_HIGH = SVG_HEIGHT - 40;
+            var X_AXIS_RANGE_LOW = 40;
+            var X_AXIS_RANGE_HIGH = SVG_WIDTH - Y_AXIS_RANGE_LOW - X_AXIS_OFFSET_X;
+            
+            var Timeline = {
+                init: function() {
+//                    
+                    //Set dimensions of the viz
+                    d3.select("#viz").attr("width", SVG_WIDTH);
+                    d3.select("#viz").attr("height", SVG_HEIGHT);
+                    
+                    this.x_scale = d3.time.scale();
+                    this.x_scale.range([X_AXIS_RANGE_LOW, X_AXIS_RANGE_HIGH]);
+                    
+                    //Establish Y scale
+                    this.y_scale = d3.scale.ordinal();
+                    this.y_scale.rangePoints([Y_AXIS_RANGE_LOW, Y_AXIS_RANGE_HIGH], 1);
+                    
+                    //Establish X axis
+                    this.x_axis = d3.svg.axis(); 
+                    this.x_axis.scale(this.x_scale);
+                    this.x_axis.orient("bottom");
+                    this.x_axis.ticks(d3.time.month, 1);
+                    this.x_axis.tickFormat(function(d) {
+                        abbr = abbr_list[d.getMonth()];
+                        if (abbr == "Jan") {return d.getFullYear();}
+                        else {return abbr;}
+                    });
+                    
+                    //Establish Y axis
+                    this.y_axis = d3.svg.axis();
+                    this.y_axis.scale(this.y_scale);
+                    this.y_axis.orient("left");
+                    
+                    this.x_axis
+                        .tickSize(-X_AXIS_OFFSET_Y, 0);
+                    this.y_axis
+                        .tickSize(-SVG_WIDTH, 0);
+                    
+                    //Append the axis
+                    this.x_axis_group = d3.select("#viz")
+                        .append("g")
+                        .attr("transform", "translate(" + String(X_AXIS_OFFSET_X) + "," + X_AXIS_OFFSET_Y + ")");
+                    this.y_axis_group = d3.select("#viz")
+                        .append("g")
+                        .attr("transform", "translate(" + String(Y_AXIS_OFFSET_X) + "," + String(Y_AXIS_OFFSET_Y) + ")");
+                },
+                
+                update: function(payload) {
+                    var self = this;
+                    var node_list = payload[0];
+                    var other_users = payload[1];
+                    var adj_startDate = payload[2][0];
+                    var adj_endDate = payload[2][1];
+                    
+                    this.x_scale.domain([adj_startDate, adj_endDate]);
+                    this.y_scale.domain(other_users);
+                    
+                    this.x_axis_group.transition().call(this.x_axis)
+                        .selectAll("text")
+                        .style("text-anchor", "end")
+                        .attr("dx", "-.8em")
+                        .attr("dy", ".15em")
+                        .attr("transform", "rotate(-55)");
+                    this.y_axis_group.transition().call(this.y_axis);
+                    
+                    var svg = d3.select("#viz");
+                    var node_elements = svg.selectAll("circle").data(node_list);
+                    node_elements.exit().remove();
+                    
+                    var min_rad = null;
+                    var max_rad = null;
+                    
+                    for (var i = 0; i < node_list.length; i++) {
+                        var node = node_list[i];
+                        var curr_rad = return_radius(node);
+                        if (min_rad == null) { min_rad = curr_rad; }
+                        if (max_rad == null) { max_rad = curr_rad; }
+                        if (min_rad > curr_rad) { min_rad = curr_rad; }
+                        if (max_rad < curr_rad) { max_rad = curr_rad; }
+                    }
+                    
+                    var area_scale = d3.scale.linear();
+                    area_scale.range([5, 15]);
+                    area_scale.domain([min_rad, max_rad]);
+                    
+                    node_elements.enter().append("circle")
+                        .on('mouseover', function(d) {
+                        Dispatcher.notify('onMouseover', d);
+                    }).on('mouseout', function(d) {
+                        Dispatcher.notify('onMouseout', d);
+                    });
+                    node_elements.transition().attr({
+                        r: function(d) { return area_scale(return_radius(d)); },
+                        cx: function(d) { return X_AXIS_OFFSET_X + self.x_scale(d.date) },
+                        cy: function(d) { return self.y_scale(d.name) }
+                    });
+                }, 
+                
+                getItem: function(d) {
+                    return d3.select("#viz").selectAll("circle").filter(function(e) {
+                        return ((d.name == e.name) && (d.date == e.date));
+                    });
+                },
+                
+                onMouseover: function(d) {
+                    this.getItem(d)
+                        .style("fill", "orange");
+                    var tooltip = d3.select("#tooltip");
+                    tooltip.select("#nodeNameDate").text(d.name + " - " + abbr_list[d.date.getMonth()] + " " + String(d.date.getFullYear()) + ":");
+                    tooltip.select("#nodeSent").text("sent: " + String(d.nSent));
+                    tooltip.select("#nodeRecvd").text("received: " + String(d.nRecvd));
+                    tooltip.style("display", "block");
+                    tooltip.style("top", ((d3.event.y) + 10) + "px");	
+                    tooltip.style("left", ((d3.event.x) + 10) + "px");
+                },
+                
+                onMouseout: function(d) {
+                    this.getItem(d)
+                        .style("fill", "red");
+                    d3.select("#tooltip").style("display", "none");
+                }
+            }
+            
+            function return_radius(d) {
+                if (d.nTotal == 0) { return 0; } 
+                var pi = 3.14;
+                var result = Math.sqrt(d.nTotal/pi);
+                return result;
+            }
+            
+        </script>
+	</body>
+</html>
