@@ -70,7 +70,6 @@ div#btmDiv {
     top: 60px;
     width: 100%;
     height: 100%;
-    padding: 10px;
 }
 
 div#vizBlock {
@@ -99,6 +98,7 @@ div#listHeaderBlock {
 }
 
 div#listBlockEntries {
+    overflow: hidden;
     overflow-y: scroll;
     float: left;
     position: absolute;
