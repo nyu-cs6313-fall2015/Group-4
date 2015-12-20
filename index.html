@@ -19,7 +19,7 @@
                     <button id = "goButton" type = "button" onclick = "getEmail()">GO</button>
                 </div>
                 <select id="dropdown"></select>
-                <button id="selectUser" onclick="openUserSelectOverlay()">Select User</a>
+                <button id="selectUser" onclick="openUserSelectOverlay()">User Overview</a>
             </div>
         </div>
         <div id="btmDiv">
@@ -410,10 +410,11 @@
                         Dispatcher.notify('onMouseout', d);
                     }).on('click', function(d) {
                         Dispatcher.notify('onMouseout', d);
-                        Selection.select(d.name);
-                    }).on('contextmenu', function(d){
-                        d3.event.preventDefault();
                         EmailList.call(d);
+                    }).on('contextmenu', function(d){
+                        Dispatcher.notify('onMouseout', d);
+                        d3.event.preventDefault();
+                        Selection.select(d.name);
                     });
                     node_elements.transition().attr({
                         r: function(d) { if (d.nSent == 0) { return 0; } else { return area_scale(return_radius(d.nSent)); } },
@@ -433,10 +434,11 @@
                         Dispatcher.notify('onMouseout', d);
                     }).on('click', function(d) {
                         Dispatcher.notify('onMouseout', d);
-                        Selection.select(d.name);
-                    }).on('contextmenu', function(d){
-                        d3.event.preventDefault();
                         EmailList.call(d);
+                    }).on('contextmenu', function(d){
+                        Dispatcher.notify('onMouseout', d);
+                        d3.event.preventDefault();
+                        Selection.select(d.name);
                     });
                     node_elements.transition().attr({
                         r: function(d) { if (d.nRecvd == 0) { return 0; } else { return area_scale(return_radius(d.nRecvd)); } },
@@ -630,10 +632,11 @@
                             Dispatcher.notify('onMouseoutList', d);
                         }).on('click', function(d, i) {
                             Dispatcher.notify('onMouseoutList', d);
-                            Selection.select(d.name);
-                        }).on('contextmenu', function(d, i){
-                            d3.event.preventDefault();
                             EmailList.call(d);
+                        }).on('contextmenu', function(d, i){
+                            Dispatcher.notify('onMouseoutList', d);
+                            d3.event.preventDefault();
+                            Selection.select(d.name);
                         });
 
                     selection.classed("upperList", true);

@@ -290,7 +290,7 @@ li.subList {
     font-weight: normal;
 }
 
-li.upperList.highlighted {
+.highlighted {
     background: navy;
     color: white;
 }
