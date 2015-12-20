@@ -136,8 +136,9 @@ def main():
 						continue
 					# I don't like this...
 					# print "sent"
-					users_dict[chosen_user][year_month_pair][other_user]["sent"]["message_ids"].append(message_id)
-					users_dict[chosen_user][year_month_pair][other_user]["sent"]["count"] += 1
+					if message_id not in users_dict[chosen_user][year_month_pair][other_user]["sent"]["message_ids"]:
+						users_dict[chosen_user][year_month_pair][other_user]["sent"]["message_ids"].append(message_id)
+						users_dict[chosen_user][year_month_pair][other_user]["sent"]["count"] += 1
 			if chosen_user in recipients:
 				other_user = emails_dict[message_id]['from']
 				if other_user == chosen_user:
@@ -145,8 +146,9 @@ def main():
 				if other_user not in users_dict.keys():
 					continue
 				# print "received"
-				users_dict[chosen_user][year_month_pair][other_user]["received"]["message_ids"].append(message_id)
-				users_dict[chosen_user][year_month_pair][other_user]["received"]["count"] += 1
+				if message_id not in users_dict[chosen_user][year_month_pair][other_user]["received"]["message_ids"]:
+					users_dict[chosen_user][year_month_pair][other_user]["received"]["message_ids"].append(message_id)
+					users_dict[chosen_user][year_month_pair][other_user]["received"]["count"] += 1
 	print "\nDone with final computation.\n"
 
 	count = 0
