@@ -4,6 +4,10 @@
         <title>Visualizing Trends in Email Communication</title>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
         <link rel="stylesheet" type="text/css" href="css/style.css">
+        
+        <!-- Source: http://github.hubspot.com/sortable/ -->
+        <script src="js/sortable.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="css/sortable-theme-bootstrap.css" />
 	</head>
 
 	<body>
@@ -15,6 +19,7 @@
                     <button id = "goButton" type = "button" onclick = "getEmail()">GO</button>
                 </div>
                 <select id="dropdown"></select>
+                <button id="selectUser" onclick="openUserSelectOverlay()">Select User</a>
             </div>
         </div>
         <div id="btmDiv">
@@ -38,9 +43,23 @@
             </ul>
         </div>
         <div id="overlayBkgrd"></div>
-        <div id="emailListBlock">
-            <button id="closeEmailButton" type = "button" onclick = "closeEmailOverlay()">CLOSE</button>
+        <div id="emailListBlock" class="overlay">
+            <button class="closeOverlayButton" type="button" onclick="closeEmailOverlay()">CLOSE</button>
             <ul id = "emailList"></ul>
+        </div>
+        <div id="userSelectBlock" class="overlay">
+            <button class="closeOverlayButton" type="button" onclick="closeUserSelectOverlay()">CLOSE</button>
+            <table class="sortable-theme-bootstrap" id="userSelectTable" data-sortable>
+                <thead>
+                    <tr>
+                        <th data-sortable-type="alpha">User</th>
+                        <th data-sortable-type="numeric">Total Sent</th>
+                        <th data-sortable-type="numeric">Total Received</th>
+                        <th data-sorted="true" data-sorted-direction="descending" data-sortable-type="numeric">Total Communication Volume</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
         </div>
         <script type="text/javascript">
             var abbr_list = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -64,8 +83,18 @@
                 }
             }
             
+            function openUserSelectOverlay() {
+                d3.select("#userSelectBlock").style("display","block");
+                d3.select("#overlayBkgrd").style("display", "block");
+            }
+            
             function closeEmailOverlay() {
                 d3.select("#emailListBlock").style("display","none");
+                d3.select("#overlayBkgrd").style("display", "none");
+            }
+            
+            function closeUserSelectOverlay() {
+                d3.select("#userSelectBlock").style("display","none");
                 d3.select("#overlayBkgrd").style("display", "none");
             }
 
@@ -181,6 +210,7 @@
                         self.year_month_pairs = data.year_month_pairs;
                         
                         Selection.init(self.user_list);
+                        UserSelectList.init(self.user_data_dict);
                     });
                 }
             }
@@ -686,6 +716,71 @@
                     return s;
                 }
                 return "";
+            }
+            
+            var UserSelectList = {
+                init: function(user_data_dict) {
+                    var table = d3.select("#userSelectTable");
+                    this.tbody = table.select("tbody");
+                    var userGrandTotals = getUserGrandTotals(user_data_dict);
+                    
+                    //sort by total in descending order (that's why the comparator is backwards)
+                    userGrandTotals.sort(function(a,b) {
+                        if (a.nTotal > b.nTotal) { return -1; }
+                        if (a.nTotal < b.nTotal) { return 1; }
+                        else { return 0; }
+                    });
+                    var selection = this.tbody.selectAll("tr").data(userGrandTotals);
+                    selection.enter().append("tr")
+                        .classed("userRow", "true")
+                        .on("mouseover", function(d) { UserSelectList.onMouseover(d); })
+                        .on("mouseout", function(d) { UserSelectList.onMouseout(d); })
+                        .on("click", function(d) { 
+                            Selection.select(d.name);
+                            closeUserSelectOverlay();
+                        });
+                    selection.append("td")
+                        .attr("data-value", function(d) { return d.name; })
+                        .text(function(d) { return d.name; });
+                    selection.append("td")
+                        .attr("data-value", function(d) { return d.nSent; })
+                        .text(function(d) { return d.nSent; });
+                    selection.append("td")
+                        .attr("data-value", function(d) { return d.nRecvd; })
+                        .text(function(d) { return d.nRecvd; });
+                    selection.append("td")
+                        .attr("data-value", function(d) { return d.nTotal; })
+                        .text(function(d) { return d.nTotal; });
+                },
+                onMouseover: function(d) {
+                    this.tbody.selectAll("tr")
+                        .classed('highlighted', function(e) { return d.name == e.name });
+                },
+                
+                onMouseout: function(d) {
+                    this.tbody.selectAll("tr")
+                        .classed('highlighted', false);
+                }
+            }
+            
+            function getUserGrandTotals(user_data_dict) {
+                var totals = [];
+                for (var user in user_data_dict) {
+                    var userTotal = {};
+                    userTotal['name'] = user;
+                    userTotal['nSent'] = 0;
+                    userTotal['nRecvd'] = 0;
+                    userTotal['nTotal'] = 0;
+                    for (var date in user_data_dict[user]) {
+                        for (var other_user in user_data_dict[user][date]) {
+                            userTotal['nSent'] += user_data_dict[user][date][other_user]['sent']['count'];
+                            userTotal['nRecvd'] += user_data_dict[user][date][other_user]['received']['count'];
+                            userTotal['nTotal'] += user_data_dict[user][date][other_user]['sent']['count'] + user_data_dict[user][date][other_user]['received']['count'];
+                        }
+                    }
+                    totals.push(userTotal);
+                }
+                return totals;
             }
 
             Timeline.init();
