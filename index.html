@@ -577,8 +577,8 @@
                     tooltip.select("#nodeSent").text("sent: " + String(d.nSent));
                     tooltip.select("#nodeRecvd").text("received: " + String(d.nRecvd));
                     tooltip.style("display", "block");
-                    tooltip.style("top", ((d3.event.y) + 10) + "px");	
-                    tooltip.style("left", ((d3.event.x) + 10) + "px");
+                    tooltip.style("top", ((d3.event.pageY) + 10) + "px");	
+                    tooltip.style("left", ((d3.event.pageX) + 10) + "px");
                 },
 
                 onMouseoverList: function(d) {
