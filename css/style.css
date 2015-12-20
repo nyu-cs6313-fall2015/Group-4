@@ -290,9 +290,27 @@ li.subList {
     font-weight: normal;
 }
 
-.highlighted {
+li.upperList.highlighted {
     background: navy;
     color: white;
+}
+
+circle.sent {
+    fill: red;
+    opacity: 0.7;
+}
+
+circle.received {
+    fill: green;
+    opacity: 0.5;
+}
+
+circle.sent.highlighted {
+    fill: orange;
+}
+
+circle.received.highlighted {
+    fill: aqua;
 }
 
 div#search {

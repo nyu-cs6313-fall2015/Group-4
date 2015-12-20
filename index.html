@@ -377,7 +377,7 @@
                         y1: self.Y_AXIS_RANGE_LOW,
                         x2: function(d) { return self.x_scale(d); },
                         y2: self.Y_AXIS_RANGE_HIGH
-                    })
+                    });
 
                     var maxR = 0;
                     var minR = return_radius(node_list[0].nTotal);
@@ -420,9 +420,7 @@
                         cx: function(d) { return self.x_scale(d.date) },
                         cy: function(d) { return self.y_scale(d.name) }
                     });
-                    node_elements
-                        .style("fill", "red")
-                        .style("opacity", 0.7);
+                    node_elements.classed("sent", true);
 
                     var node_elements = svg.select("#nodesReceived").selectAll("circle").data(node_list);
                     node_elements.exit().remove();
@@ -445,9 +443,7 @@
                         cx: function(d) { return self.x_scale(d.date) },
                         cy: function(d) { return self.y_scale(d.name) }
                     });
-                    node_elements
-                        .style("fill", "green")
-                        .style("opacity", 0.7);
+                    node_elements.classed("received", true);
 
                     d3.select("#legend").remove();
                     d3.select("#viz").append("g").attr("id", "legend");
@@ -517,7 +513,7 @@
                         .attr("y", rectH1)
                         .attr("width", colorRectW)
                         .attr("height", colorRectH)
-                        .style("fill", "red")
+                        .style("fill", "red");
 
                     legend.append("text")
                             .attr("x", cx + colorRectW + 10 )
@@ -530,7 +526,7 @@
                         .attr("y", rectH2)
                         .attr("width", colorRectW)
                         .attr("height", colorRectH)
-                        .style("fill", "green")
+                        .style("fill", "green");
 
                     legend.append("text")
                             .attr("x", cx + colorRectW + 10 )
@@ -564,10 +560,8 @@
                 },
                 
                 onMouseover: function(d) {
-                    this.getItemSent(d)
-                        .style("fill", "orange");
-                    this.getItemReceived(d)
-                        .style("fill", "aqua");
+                    this.getItemSent(d).classed("highlighted", true);
+                    this.getItemReceived(d).classed("highlighted", true);
                     this.getXLine(d)
                         .style("opacity", 1);
                     this.getYLine(d)
@@ -587,10 +581,8 @@
                 },
                 
                 onMouseout: function(d) {
-                    this.getItemSent(d)
-                        .style("fill", "red");
-                    this.getItemReceived(d)
-                        .style("fill", "green");
+                    this.getItemSent(d).classed("highlighted", false);
+                    this.getItemReceived(d).classed("highlighted", false);
                     this.getXLine(d)
                         .style("opacity", 0.25);
                     this.getYLine(d)
