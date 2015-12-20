@@ -279,7 +279,7 @@
                     
                     this.WINDOW_WIDTH = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
                     this.WINDOW_HEIGHT = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-                    this.SVG_WIDTH = this.WINDOW_WIDTH - 460;
+                    this.SVG_WIDTH = this.WINDOW_WIDTH - 350;
                     this.SVG_HEIGHT = this.WINDOW_HEIGHT - 70;
 
                     this.LEGEND_X = 100;
@@ -576,8 +576,14 @@
                     tooltip.select("#nodeSent").text("sent: " + String(d.nSent));
                     tooltip.select("#nodeRecvd").text("received: " + String(d.nRecvd));
                     tooltip.style("display", "block");
-                    tooltip.style("top", ((d3.event.pageY) + 10) + "px");	
-                    tooltip.style("left", ((d3.event.pageX) + 10) + "px");
+                    var left = (d3.event.pageX) + 10;
+                    var right = left + parseInt(tooltip.style("width"));
+                    if (right > this.WINDOW_WIDTH) {
+                        right = (d3.event.pageX) - 30;
+                        left = right - parseInt(tooltip.style("width"))
+                    } 
+                    tooltip.style("left", (left + "px"));
+                    tooltip.style("top", ((d3.event.pageY) + 10) + "px");
                 },
 
                 onMouseoverList: function(d) {
