@@ -313,9 +313,9 @@
                     this.x_axis.scale(this.x_scale);
                     this.x_axis.orient("bottom");
                     this.x_axis.ticks(d3.time.month, 1);
-                    this.x_axis.tickFormat(function(d) {
+                    this.x_axis.tickFormat(function(d, i) {
                         abbr = abbr_list[d.getMonth()];
-                        if (abbr == "Jan") {return d.getFullYear();}
+                        if (abbr == "Jan" || i == 0) {return d.getFullYear();}
                         else {return abbr;}
                     });
                     
