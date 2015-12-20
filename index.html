@@ -578,8 +578,6 @@
                     
                     var listHeaderData = total_comm.splice(0,1);
                     listHeaderData = listHeaderData[0];
-                    console.log(listHeaderData);
-                    console.log(listHeaderData.name);
                     
                     var listHeader = d3.select("#listHeader");
                     listHeader.text(listHeaderData.name);
@@ -677,14 +675,17 @@
             }
             
             function formatListToString(listToFormat) {
-                var s = "";
-                if (listToFormat.length > 0) {
-                    for (var i=0; i < (listToFormat.length - 1); i++) {
-                        s = s + listToFormat[i] + ", "
+                if (listToFormat) {
+                    var s = "";
+                    if (listToFormat.length > 0) {
+                        for (var i=0; i < (listToFormat.length - 1); i++) {
+                            s = s + listToFormat[i] + ", "
+                        }
+                        s = s + listToFormat[listToFormat.length - 1];
                     }
-                    s = s + listToFormat[listToFormat.length - 1];
+                    return s;
                 }
-                return s;
+                return "";
             }
 
             Timeline.init();
