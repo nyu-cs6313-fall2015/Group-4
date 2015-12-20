@@ -276,11 +276,14 @@
                 init: function() {
                     this.MIN_R = 5;
                     this.MAX_R = 15;
+                    
+                    this.WINDOW_WIDTH = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+                    this.WINDOW_HEIGHT = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+                    this.SVG_WIDTH = this.WINDOW_WIDTH - 460;
+                    this.SVG_HEIGHT = this.WINDOW_HEIGHT - 70;
 
-                    this.RANGE = 1000;
                     this.LEGEND_X = 100;
-                    this.SVG_WIDTH = this.RANGE + this.LEGEND_X;
-                    this.SVG_HEIGHT = 750;
+                    this.RANGE = this.SVG_WIDTH - this.LEGEND_X
 
                     this.X_AXIS_OFFSET_Y = this.SVG_HEIGHT - 50;
                     this.Y_AXIS_OFFSET_X = 200;
