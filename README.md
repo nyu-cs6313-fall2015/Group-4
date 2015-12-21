@@ -9,7 +9,7 @@ When government investigators are looking into some party or entity, one of the 
 <br/><br/>
 Our application provides investigators with a timeline of sorts, mapping time (in months) to the x-axis and users (email addresses) to the y-axis. The timeline/chart displayed is always given in the context of a single selected user. The other users on the y-axis are the users that they communicated. On the chart, using area to encode email volume, red nodes indicate emails sent by the selected user and green nodes indicate emails that the selected user received (in other words, the emails sent by to the selected user by the other user). In this way, our visualization allows an investigator tp easily view and understand the variances in communication patterns for a given user.
 <br/><br/>
-This visualization was created as a final project for the Information Visualization(CS-GY 6313) class taught by Prof. Enrico Bertini at the NYU Tandon School of Engineering.
+This visualization was created as a final project for the Information Visualization (CS-GY 6313) class taught by Prof. Enrico Bertini at the NYU Tandon School of Engineering.
 
 ### Video
 A video detailing the problem our visualization solves and how our viz can be used can be found below:
