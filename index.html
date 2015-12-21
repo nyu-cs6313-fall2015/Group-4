@@ -702,6 +702,9 @@
                     selection.enter().append("ul").classed("fullEmail", true);
                     
                     var header = selection.append("li").classed("emailHeader", true).append("ul");
+                    var id = header.append("li");
+                    id.append("span").text("Message ID:").classed("emailDetailHeader", true);
+                    id.append("span").text(function(d) { return email_dict[d].message_id; });
                     var date = header.append("li");
                     date.append("span").text("Date:").classed("emailDetailHeader", true);
                     date.append("span").text(function(d) { return new Date(email_dict[d].date); });
