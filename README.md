@@ -21,7 +21,7 @@ A live demo of this visualization tool is available at:
 
 ### Final Report
 The final report we compiled, detailing all aspects of this project can be found below:
-* [Final Report](https://docs.google.com/document/d/10lqvxBguJ9NJXVSaD6KxuYbIgZnCyyv5ESR23sZV87w/edit?usp=sharing)
+* [Final Report](https://drive.google.com/file/d/0B56UXIxhbu9qLW16enlmTHRfc1U/view?usp=sharing)
 
 ### Data
 The original, unprocessed dataset can be found below:
