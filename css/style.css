@@ -13,11 +13,29 @@ div#topDiv {
     position: fixed;
     z-index: 100;
     border-bottom: 1px solid black;
-    background-color: white;
+    background-color: navy;
+    color: white;
+}
+div#topLeft {
+    float: left;
+}
+
+div#topRight {
+    position: absolute;
+    right: 0px;
+    width: 600px;
+    float: right;
+}
+
+h1#pageTitle {
+    font-size: 25pt;
+    padding-top: 10px;
+    padding-left: 10px;
 }
 
 div#selectUserBlock {
     padding: 10px;
+    padding-top: 20px;
     position: fixed;
 }
 

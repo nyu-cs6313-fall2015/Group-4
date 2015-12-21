@@ -12,14 +12,19 @@
 
 	<body>
         <div id="topDiv">
-            <div id="selectUserBlock">
-                <div id="search">
-                    <label>Search: </label>
-                    <input id = "emailName" type = "text" onkeypress="javascript:return ((event.keyCode == 13) ? false : true)" onkeyup = "prsButton(event, this.value)">
-                    <button id = "goButton" type = "button" onclick = "getEmail()">GO</button>
+            <div id="topLeft">
+                <h1 id="pageTitle">Visualizing Trends in Email Communication</h1>
+            </div>
+            <div id="topRight">
+                <div id="selectUserBlock">
+                    <div id="search">
+                        <label>Search: </label>
+                        <input id = "emailName" type = "text" onkeypress="javascript:return ((event.keyCode == 13) ? false : true)" onkeyup = "prsButton(event, this.value)">
+                        <button id = "goButton" type = "button" onclick = "getEmail()">GO</button>
+                    </div>
+                    <select id="dropdown"></select>
+                    <button id="selectUser" onclick="openUserSelectOverlay()">User Overview</a>
                 </div>
-                <select id="dropdown"></select>
-                <button id="selectUser" onclick="openUserSelectOverlay()">User Overview</a>
             </div>
         </div>
         <div id="btmDiv">
