@@ -13,7 +13,7 @@ This visualization was created as a final project for the Information Visualizat
 
 ### Video
 A video detailing the problem our visualization solves and how our viz can be used can be found below:
-* [Video](insert link here)
+* [Video](https://vimeo.com/149631861)
 
 ### Demo
 A live demo of this visualization tool is available at:
