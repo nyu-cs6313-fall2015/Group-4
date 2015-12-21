@@ -690,10 +690,21 @@
                     var email_dict = Controller.email_dict;
 
                     this.list.selectAll("ul").remove();
-                    var selection = this.list.selectAll("ul").data(node.sentIds.concat(node.recvdIds));
+                    var unionIds = unionOfArrays(node.sentIds, node.recvdIds);
+                    unionIds.sort(function(a, b) {
+                        var a_date = new Date(email_dict[a].date);
+                        var b_date = new Date(email_dict[b].date);
+                        if (a_date > b_date) { return 1; }
+                        if (a_date < b_date) { return -1; }
+                        else { return 0; }
+                    });
+                    var selection = this.list.selectAll("ul").data(unionIds);
                     selection.enter().append("ul").classed("fullEmail", true);
                     
                     var header = selection.append("li").classed("emailHeader", true).append("ul");
+                    var date = header.append("li");
+                    date.append("span").text("Date:").classed("emailDetailHeader", true);
+                    date.append("span").text(function(d) { return new Date(email_dict[d].date); });
                     var subj = header.append("li");
                     subj.append("span").text("Subject:").classed("emailDetailHeader", true);
                     subj.append("span").text(function(d) { return email_dict[d].subject; });
@@ -716,6 +727,19 @@
                     d3.select("#emailListBlock").style("display", "block");
                     d3.select("#overlayBkgrd").style("display", "block");
                 }
+            }
+            
+            function unionOfArrays(arr1, arr2) {
+                var arr3 = [];
+                for (var i = 0; i < arr1.length; i++) {
+                    arr3.push(arr1[i]);
+                }
+                for (var i = 0; i < arr2.length; i++) {
+                    if (arr3.indexOf(arr2[i]) == -1) {
+                        arr3.push(arr2[i]);
+                    }
+                }
+                return arr3;
             }
             
             function formatListToString(listToFormat) {
